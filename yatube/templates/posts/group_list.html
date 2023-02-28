@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}
+  Все записи сообщества {{ group.title }}
+{% endblock title %}
+{% block content %}
+  <h1>{{ group.title }}</h1>
+    <p>{{ group.description }}</p>
+  {% for post in posts %}
+      {% include "posts/includes/post.html" %}
+    {% if not forloop.last %}<hr>{% endif %}
+  {% endfor %}
+{% endblock content %}
