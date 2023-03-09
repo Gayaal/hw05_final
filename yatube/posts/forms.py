@@ -1,4 +1,5 @@
 from django import forms
+
 from posts.models import Comment, Post
 
 
@@ -15,7 +16,7 @@ class PostForm(forms.ModelForm):
             'group': 'Выберите группу, если хотите',
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.fields['text'].widget.attrs['placeholder'] = ()
         self.fields['group'].empty_label = 'Выберите группу, если желаете 🙂'
@@ -30,14 +31,14 @@ class PostForm(forms.ModelForm):
 
 
 class CommentForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['text'].widget.attrs[
-            'placeholder'
-        ] = 'Введите сюда комментарий'
-
     class Meta:
         model = Comment
         fields = ('text',)
         labels = {'text': 'Текст комментария'}
         help_texts = {'text': 'Введите сюда комментарий'}
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields['text'].widget.attrs[
+            'placeholder'
+        ] = 'Введите сюда комментарий'

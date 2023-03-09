@@ -1,9 +1,11 @@
-from about import views
 from django.urls import path
 
-app_name = 'about'
+from about.apps import AboutConfig
+from about.views import AboutAuthorView, AboutTechView
+
+app_name = AboutConfig.name
 
 urlpatterns = [
-    path('author/', views.AboutAuthorView.as_view(), name='author'),
-    path('tech/', views.AboutTechView.as_view(), name='tech'),
+    path('author/', AboutAuthorView.as_view(), name='author'),
+    path('tech/', AboutTechView.as_view(), name='tech'),
 ]

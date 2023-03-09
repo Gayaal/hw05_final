@@ -1,10 +1,12 @@
 from django.contrib.auth import views as vi
 from django.urls import include, path
+
+from users.apps import UsersConfig
 from users.views import SignUp
 
-app_name = 'users'
+app_name = UsersConfig.name
 
-password_patterns = [
+passwords = [
     path(
         'change/',
         vi.PasswordChangeView.as_view(
@@ -61,5 +63,5 @@ urlpatterns = [
         vi.LoginView.as_view(template_name='users/login.html'),
         name='login',
     ),
-    path('password/', include(password_patterns)),
+    path('password/', include(passwords)),
 ]

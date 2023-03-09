@@ -1,60 +1,69 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
-
-from yatube.settings import CHARACTER_NUMBER
 
 User = get_user_model()
 
 
 class Group(models.Model):
-    title = models.CharField(verbose_name='Группа', max_length=200)
-    slug = models.SlugField(verbose_name='Слаг', unique=True)
-    description = models.TextField(verbose_name='Описание')
+    title = models.CharField(
+        verbose_name='заголовок',
+        max_length=200,
+    )
+    slug = models.SlugField(
+        verbose_name='слаг',
+        unique=True,
+    )
+    description = models.TextField(
+        verbose_name='описание',
+    )
 
     class Meta:
-        verbose_name_plural = 'Группы'
+        verbose_name_plural = 'группы'
 
     def __str__(self) -> str:
-        return self.title
+        return self.title[: settings.CHARACTER_NUMBER]
 
 
 class Post(models.Model):
-    text = models.TextField(verbose_name='Текст', max_length=200)
+    text = models.TextField(verbose_name='текст', max_length=200)
     pub_date = models.DateTimeField(
-        verbose_name='Дата публикации',
+        verbose_name='дата публикации',
         auto_now_add=True,
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор',
+        verbose_name='автор',
     )
     group = models.ForeignKey(
         Group,
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-        verbose_name='Группа',
+        verbose_name='группа',
     )
     image = models.ImageField(
-        verbose_name='Картинка', upload_to='posts/', blank=True
+        verbose_name='картинка',
+        upload_to='posts/',
+        blank=True,
     )
 
     class Meta:
         default_related_name = 'posts'
-        verbose_name_plural = 'Посты'
+        verbose_name_plural = 'посты'
         ordering = ('-pub_date',)
 
     def __str__(self) -> str:
-        return self.text[:CHARACTER_NUMBER]
+        return self.text[: settings.CHARACTER_NUMBER]
 
 
 class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        verbose_name='Комментарий',
-        help_text='Прокомментируйте запись',
+        verbose_name='комментарий',
+        help_text='прокомментируйте запись',
         related_name='comments',
     )
     author = models.ForeignKey(
@@ -73,38 +82,42 @@ class Comment(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Комментарий'
-        verbose_name_plural = 'Комментарии'
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'комментарии'
         ordering = ('-created',)
 
     def __str__(self) -> str:
-        return self.text[:CHARACTER_NUMBER]
+        return self.text[: settings.CHARACTER_NUMBER]
 
 
 class Follow(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Подписчик',
+        verbose_name='подписчик',
         related_name='follower',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор',
+        verbose_name='автор',
         related_name='following',
     )
     created = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Создан',
+        verbose_name='создан',
     )
 
     class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
+        verbose_name = 'подписка'
+        verbose_name_plural = 'подписки'
         ordering = ('-created',)
         constraints = [
             models.UniqueConstraint(
-                fields=['author', 'user'], name='unique_follow'
+                fields=('author', 'user'),
+                name='unique_follow',
             )
         ]
+
+    def __str__(self) -> str:
+        return self.user.get_username()
