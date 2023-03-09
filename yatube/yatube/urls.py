@@ -1,13 +1,13 @@
 from django.conf import settings
-from django.conf.urls.static import static
 
 from about.apps import AboutConfig
 
-from posts.apps import PostsConfig
-
 from django.contrib import admin
 
+from posts.apps import PostsConfig
+
 from django.urls import include, path
+from django.conf.urls.static import static
 
 from users.apps import UsersConfig
 
