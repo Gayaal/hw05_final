@@ -2,7 +2,7 @@ import shutil
 import tempfile
 from http import HTTPStatus
 
-from django.core.files.uploadedfile import SimpleUploadedFile 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
@@ -69,11 +69,11 @@ class PostCreateFormTests(TestCase):
         )
         self.assertEqual(post.text, data['text'])
         self.assertEqual(post.author, self.author)
-        for form_field in pictures.keys(): 
-            self.assertFalse( 
-                Post.objects.latest('author').image, 
+        for form_field in pictures.keys():
+            self.assertFalse(
+                Post.objects.latest('author').image,
                 'posts/small.gif',
-            ) 
+            )
         for form_field in data.keys():
             self.assertTrue(
                 (
@@ -98,7 +98,8 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         self.assertRedirects(
-            response, reverse('posts:post_detail', args=[post.pk]),
+            response,
+            reverse('posts:post_detail', args=[post.pk]),
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(post.text == data['text'])
@@ -110,7 +111,9 @@ class PostCreateFormTests(TestCase):
             'text': 'Текст поста',
         }
         response = self.client.post(
-            reverse('posts:post_create'), data=data, follow=True,
+            reverse('posts:post_create'),
+            data=data,
+            follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertRedirects(
@@ -156,7 +159,8 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         self.assertRedirects(
-            response, reverse('posts:post_detail', args=[post.pk]),
+            response,
+            reverse('posts:post_detail', args=[post.pk]),
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(post.text == data['text'])

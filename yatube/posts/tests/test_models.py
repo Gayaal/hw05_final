@@ -18,7 +18,8 @@ class PostModelTest(TestCase):
 
     def test_post_models_correct_names(self) -> None:
         self.assertEqual(
-            self.post.text[: settings.CHARACTER_NUMBER], str(self.post),
+            self.post.text[: settings.CHARACTER_NUMBER],
+            str(self.post),
         )
 
 

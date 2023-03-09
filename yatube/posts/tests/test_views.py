@@ -37,7 +37,9 @@ class PostPagesTests(TestCase):
             b'\x0A\x00\x3B'
         )
         uploaded = SimpleUploadedFile(
-            name='posts/small.gif', content=small_gif, content_type='image/gif',
+            name='posts/small.gif',
+            content=small_gif,
+            content_type='image/gif',
         )
         cls.post_with_group = Post.objects.create(
             author=cls.user,
@@ -79,14 +81,17 @@ class PostPagesTests(TestCase):
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
             reverse(
-                'posts:group_list', args={self.group.slug},
+                'posts:group_list',
+                args={self.group.slug},
             ): 'posts/group_list.html',
             reverse('posts:profile', args={self.user}): 'posts/profile.html',
             reverse(
-                'posts:post_detail', args={self.post.pk},
+                'posts:post_detail',
+                args={self.post.pk},
             ): 'posts/post_detail.html',
             reverse(
-                'posts:post_edit', args={self.post.pk},
+                'posts:post_edit',
+                args={self.post.pk},
             ): 'posts/create_post.html',
             reverse('posts:post_create'): 'posts/create_post.html',
         }
@@ -211,7 +216,8 @@ class PaginatorViewsTests(TestCase):
             response_1 = self.authorized_client.get(address)
             response_2 = self.authorized_client.get(address + '?page=2')
             self.assertEqual(
-                len(response_1.context['page_obj']), settings.TEXTS_PER_PAGE,
+                len(response_1.context['page_obj']),
+                settings.TEXTS_PER_PAGE,
             )
             self.assertEqual(
                 len(response_2.context['page_obj']),
@@ -250,7 +256,8 @@ class FollowTests(TestCase):
             reverse('posts:profile_follow', args={self.author}),
         )
         self.assertRedirects(
-            response, reverse('posts:profile', args={self.author}),
+            response,
+            reverse('posts:profile', args={self.author}),
         )
         self.assertEqual(Follow.objects.count(), follow_count + 1)
         self.assertTrue(
@@ -266,7 +273,8 @@ class FollowTests(TestCase):
             reverse('posts:profile_unfollow', args={self.author}),
         )
         self.assertRedirects(
-            response, reverse('posts:profile', args={self.author}),
+            response,
+            reverse('posts:profile', args={self.author}),
         )
         self.assertEqual(Follow.objects.count(), follow_count)
         self.assertFalse(

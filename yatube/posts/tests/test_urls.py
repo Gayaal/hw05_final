@@ -36,10 +36,12 @@ class PostURLTests(TestCase):
             'post_create': reverse('posts:post_create'),
             'follow_index': reverse('posts:follow_index'),
             'profile_follow': reverse(
-                'posts:profile_follow', args=(cls.author,),
+                'posts:profile_follow',
+                args=(cls.author,),
             ),
             'profile_unfollow': reverse(
-                'posts:profile_unfollow', args=(cls.author,),
+                'posts:profile_unfollow',
+                args=(cls.author,),
             ),
             'index': reverse('posts:index'),
         }
