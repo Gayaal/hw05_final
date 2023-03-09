@@ -71,7 +71,7 @@ class PostCreateFormTests(TestCase):
         for form_field in pictures.keys():
             self.assertFalse(
                 Post.objects.latest('author').image,
-                'posts/small.gif',
+                uploaded,
             )
         for form_field in data.keys():
             self.assertTrue(
