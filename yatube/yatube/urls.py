@@ -1,14 +1,15 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 
 from about.apps import AboutConfig
 
 from posts.apps import PostsConfig
 
-from users.apps import UsersConfig
+from django.contrib import admin
 
 from django.urls import include, path
+
+from users.apps import UsersConfig
 
 urlpatterns = [
     path("", include("posts.urls", namespace=PostsConfig.name)),
