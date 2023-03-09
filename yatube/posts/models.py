@@ -116,7 +116,7 @@ class Follow(models.Model):
             models.UniqueConstraint(
                 fields=('author', 'user'),
                 name='unique_follow',
-            )
+            ),
         ]
 
     def __str__(self) -> str:

@@ -1,9 +1,10 @@
+from core.utils import paginator
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import cache_page
 
-from core.utils import paginator
 from posts.forms import CommentForm, PostForm
 from posts.models import Follow, Group, Post
 
@@ -18,7 +19,7 @@ def index(request: str) -> str:
         {
             'posts': Post.objects.select_related('author', 'group'),
             'page_obj': paginator(
-                request, Post.objects.select_related('author', 'group')
+                request, Post.objects.select_related('author', 'group'),
             ),
         },
     )
@@ -33,7 +34,7 @@ def group_posts(request, slug):
             'page_obj': paginator(
                 request,
                 get_object_or_404(Group, slug=slug).posts.select_related(
-                    'group'
+                    'group',
                 ),
             ),
         },
@@ -142,7 +143,7 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username: str):
     follow = get_object_or_404(
-        Follow, user=request.user, author__username=username
+        Follow, user=request.user, author__username=username,
     )
     follow.delete()
     return redirect('posts:profile', username)

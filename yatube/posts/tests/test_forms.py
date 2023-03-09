@@ -2,6 +2,7 @@ import shutil
 import tempfile
 from http import HTTPStatus
 
+from django.core.files.uploadedfile import SimpleUploadedFile 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
@@ -31,6 +32,19 @@ class PostCreateFormTests(TestCase):
         self.authorized_user.force_login(self.author)
 
     def test_authorized_user_create_post(self) -> None:
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='posts/small.gif',
+            content=small_gif,
+            content_type='image/gif',
+        )
         post = Post.objects.create(
             text='Текст поста',
             author=self.author,
@@ -39,7 +53,7 @@ class PostCreateFormTests(TestCase):
             'text': 'Текст поста',
         }
         pictures = {
-            'image': create_image,
+            'image': uploaded,
         }
         response = self.authorized_user.post(
             reverse('posts:post_create'),
@@ -55,19 +69,19 @@ class PostCreateFormTests(TestCase):
         )
         self.assertEqual(post.text, data['text'])
         self.assertEqual(post.author, self.author)
-        for form_field in pictures.keys():
-            self.assertFalse(
-                Post.objects.latest('author').image,
-                'giffy.gif',
-            )
+        for form_field in pictures.keys(): 
+            self.assertFalse( 
+                Post.objects.latest('author').image, 
+                'posts/small.gif',
+            ) 
         for form_field in data.keys():
             self.assertTrue(
                 (
                     Post._meta.get_field(form_field).value_from_object(
-                        Post.objects.latest('author')
+                        Post.objects.latest('author'),
                     )
                 )
-                == data[form_field]
+                == data[form_field],
             )
 
     def test_authorized_user_edit_post(self) -> None:
@@ -84,7 +98,7 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         self.assertRedirects(
-            response, reverse('posts:post_detail', args=[post.pk])
+            response, reverse('posts:post_detail', args=[post.pk]),
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(post.text == data['text'])
@@ -96,7 +110,7 @@ class PostCreateFormTests(TestCase):
             'text': 'Текст поста',
         }
         response = self.client.post(
-            reverse('posts:post_create'), data=data, follow=True
+            reverse('posts:post_create'), data=data, follow=True,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertRedirects(
@@ -142,7 +156,7 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         self.assertRedirects(
-            response, reverse('posts:post_detail', args=[post.pk])
+            response, reverse('posts:post_detail', args=[post.pk]),
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(post.text == data['text'])
