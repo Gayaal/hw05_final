@@ -1,8 +1,8 @@
 from io import BytesIO
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 def create_image(name: str = 'giffy.gif') -> SimpleUploadedFile:
     file = BytesIO()
