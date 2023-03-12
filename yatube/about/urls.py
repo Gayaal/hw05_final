@@ -1,5 +1,4 @@
 from about.apps import AboutConfig
-
 from about.views import AboutAuthorView, AboutTechView
 
 from django.urls import path
