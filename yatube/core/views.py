@@ -1,9 +1,10 @@
 from http import HTTPStatus
+from typing import Any
 
 from django.shortcuts import render
 
 
-def page_not_found(request, exception: str) -> str:
+def page_not_found(request: Any, exception: str) -> str:
     del exception
     return render(
         request,

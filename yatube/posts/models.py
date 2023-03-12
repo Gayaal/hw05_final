@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from yatube.models import BaseModel, CreatedModel
+
 User = get_user_model()
 
 
@@ -25,17 +27,7 @@ class Group(models.Model):
         return self.title[: settings.CHARACTER_NUMBER]
 
 
-class Post(models.Model):
-    text = models.TextField(verbose_name='текст', max_length=200)
-    pub_date = models.DateTimeField(
-        verbose_name='дата публикации',
-        auto_now_add=True,
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='автор',
-    )
+class Post(BaseModel):
     group = models.ForeignKey(
         Group,
         blank=True,
@@ -58,27 +50,13 @@ class Post(models.Model):
         return self.text[: settings.CHARACTER_NUMBER]
 
 
-class Comment(models.Model):
+class Comment(BaseModel, CreatedModel):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
         verbose_name='комментарий',
         help_text='прокомментируйте запись',
         related_name='comments',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Комментатор',
-        related_name='comments',
-    )
-    text = models.TextField(
-        verbose_name='Комментарий',
-        help_text='Введите комментарий',
-    )
-    created = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Создан',
     )
 
     class Meta:

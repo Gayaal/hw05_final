@@ -1,14 +1,8 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 
 User = get_user_model()
-
-
-class TextModel(models.Model):
-    text = models.TextField(
-        verbose_name='текст',
-        max_length=200,
-    )
 
 
 class BaseModel(models.Model):
@@ -24,10 +18,14 @@ class BaseModel(models.Model):
     pub_date = models.DateTimeField(
         verbose_name='дата публикации',
         auto_now_add=True,
+        null=True,
     )
 
     class Meta:
         abstract = True
+
+    def __str__(self) -> str:
+        return self.text[: settings.CHARACTER_NUMBER]
 
 
 class CreatedModel(models.Model):

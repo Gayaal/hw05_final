@@ -1,10 +1,11 @@
-from core.utils import paginator
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import cache_page
 
+from core.utils import paginator
 from posts.forms import CommentForm, PostForm
 from posts.models import Follow, Group, Post
 
@@ -26,7 +27,7 @@ def index(request: str) -> str:
     )
 
 
-def group_posts(request, slug):
+def group_posts(request: str, slug: str) -> str:
     return render(
         request,
         'posts/group_list.html',
@@ -59,7 +60,7 @@ def profile(request: str, username: str) -> str:
     )
 
 
-def post_detail(request: str, pk: int) -> str:
+def post_detail(request: Any, pk: int) -> str:
     return render(
         request,
         'posts/post_detail.html',
@@ -72,7 +73,7 @@ def post_detail(request: str, pk: int) -> str:
 
 
 @login_required
-def post_create(request: str) -> str:
+def post_create(request: Any) -> str:
     form = PostForm(request.POST or None)
     if not form.is_valid():
         return render(request, 'posts/create_post.html', {'form': form})
@@ -82,7 +83,7 @@ def post_create(request: str) -> str:
 
 
 @login_required
-def post_edit(request, pk: int):
+def post_edit(request: Any, pk: int) -> str:
     post = get_object_or_404(Post, id=pk)
     if post.author != request.user:
         return redirect('posts:post_detail', pk=pk)
@@ -102,21 +103,21 @@ def post_edit(request, pk: int):
 
 
 @login_required
-def add_comment(request: str, pk: int) -> str:
+def add_comment(request: Any, pk: int) -> str:
     post = get_object_or_404(Post, id=pk)
     form = CommentForm(request.POST or None)
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        comment.save()
-        return redirect('posts:post_detail', pk=pk)
     comments = post.comments.all()
-    return render(
-        request,
-        'posts/post_detail.html',
-        {'post': post, 'form': form, 'comments': comments},
-    )
+    if not form.is_valid():
+        return render(
+            request,
+            'posts/post_detail.html',
+            {'post': post, 'form': form, 'comments': comments},
+        )
+    comment = form.save(commit=False)
+    comment.author = request.user
+    comment.post = post
+    comment.save()
+    return redirect('posts:post_detail', pk=pk)
 
 
 @login_required

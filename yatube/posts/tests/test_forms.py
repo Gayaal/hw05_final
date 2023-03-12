@@ -9,6 +9,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from posts.models import Follow, Post
+from posts.tests.common import create_image
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -31,19 +32,6 @@ class PostCreateFormTests(TestCase):
         self.authorized_user.force_login(self.author)
 
     def test_authorized_user_create_post(self) -> None:
-        small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-        uploaded = SimpleUploadedFile(
-            name='posts/small.gif',
-            content=small_gif,
-            content_type='image/gif',
-        )
         post = Post.objects.create(
             text='Текст поста',
             author=self.author,
@@ -52,7 +40,7 @@ class PostCreateFormTests(TestCase):
             'text': 'Текст поста',
         }
         pictures = {
-            'image': uploaded,
+            'image': create_image,
         }
         response = self.authorized_user.post(
             reverse('posts:post_create'),
