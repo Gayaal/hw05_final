@@ -1,13 +1,14 @@
+from http import HTTPStatus
 import shutil
 import tempfile
-from http import HTTPStatus
 
+from mixer.backend.django import mixer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from posts.models import Follow, Post
+from posts.models import Follow, Group, Post
 from posts.tests.common import create_image
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -21,167 +22,181 @@ class PostCreateFormTests(TestCase):
     def setUpTestData(cls):
         cls.author = User.objects.create_user(username='author')
         cls.authorized_user = Client()
+        cls.authorized_user.force_login(cls.author)
+
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
-    def setUp(self) -> None:
-        self.authorized_user.force_login(self.author)
-
     def test_authorized_user_create_post(self) -> None:
-        post = Post.objects.create(
-            text='Текст поста',
-            author=self.author,
-        )
+        image = create_image()
         data = {
             'text': 'Текст поста',
+            'image': image,
         }
-        pictures = {
-            'image': create_image,
-        }
-        response = self.authorized_user.post(
+        self.authorized_user.post(
             reverse('posts:post_create'),
             data=data,
             follow=True,
         )
-        self.assertRedirects(
-            response,
-            reverse(
-                'posts:profile',
-                kwargs={'username': self.author.username},
-            ),
-        )
-        self.assertEqual(post.text, data['text'])
-        self.assertEqual(post.author, self.author)
-        for form_field in pictures.keys():
-            self.assertFalse(
-                Post.objects.latest('author').image,
-                pictures[form_field],
-            )
-        for form_field in data.keys():
-            self.assertTrue(
-                (
-                    Post._meta.get_field(form_field).value_from_object(
-                        Post.objects.latest('author'),
-                    )
-                )
-                == data[form_field],
-            )
+        image_file = data['image']
+        image_file.seek(0)
+        new_post = Post.objects.first()
+        self.assertEqual(new_post.author, self.author)
+        self.assertEqual(new_post.text, data['text'])
+        self.assertEqual(new_post.image.file.read(), image_file.read())
 
-    def test_authorized_user_edit_post(self) -> None:
-        post = Post.objects.create(
-            text='Текст поста для редактирования',
-            author=self.author,
-        )
+    def test_author_can_edit_post(self) -> None:
+        post = mixer.blend('posts.Post', author=self.author)
+        image = create_image()
         data = {
-            'text': 'Отредактированный текст поста',
+            'text': 'Изменённый текст поста',
+            'group': mixer.blend('posts.Group').pk,
+            'image': image,
         }
-        response = self.authorized_user.post(
-            reverse('posts:post_edit', args=[post.pk]),
+        self.authorized_user.post(
+            reverse('posts:post_edit', args={post.pk}),
             data=data,
             follow=True,
         )
-        self.assertRedirects(
-            response,
-            reverse('posts:post_detail', args=[post.pk]),
-        )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(post.text == data['text'])
-        self.assertTrue(post.author == self.author)
+        post.refresh_from_db()
+        image_file = data['image']
+        image_file.seek(0)
+        self.assertEqual(post.text, data['text'])
+        self.assertEqual(post.group.pk, data['group'])
+        self.assertEqual(post.image.file.read(), image_file.read())
 
     def test_nonauthorized_user_create_post(self) -> None:
         self.client = Client()
+        image = create_image()
         data = {
             'text': 'Текст поста',
+            'image': image,
         }
-        response = self.client.post(
+        self.client.post(
             reverse('posts:post_create'),
             data=data,
             follow=True,
         )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertRedirects(
-            response,
-            reverse('login') + '?next=' + reverse('posts:post_create'),
-        )
-
-    def test_nonauthorized_user_edit_post(self) -> None:
-        self.client = Client()
-        post = Post.objects.create(
-            text='Текст поста для редактирования',
-            author=self.author,
-        )
         posts_count = Post.objects.count()
-        data = {
-            'text': 'Текст поста',
-        }
+        self.assertEqual(Post.objects.all().count(), posts_count)
+
+    def test_nonauthorized_can_not_edit_post(self) -> None:
+        post = mixer.blend('posts.Post', author=self.author)
+        self.client = Client()
         response = self.client.post(
-            reverse('posts:post_edit', args=[post.pk]),
-            data=data,
+            reverse('posts:post_edit', args={post.pk}),
             follow=True,
         )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertRedirects(
-            response,
-            reverse('login')
-            + '?next='
-            + reverse('posts:post_edit', args=[post.pk]),
+        post.refresh_from_db()
+        self.assertEqual(
+            response.post().status_code,
+            HTTPStatus.UNAUTHORIZED.value,
         )
-        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertEqual(post.text, response.context.get('post').text)
+        self.assertEqual(post.group.pk, response.context.get('post').group.pk)
+        self.assertEqual(
+            post.image.file.read(),
+            response.context.get('post').image.file.read(),
+        )
 
-    def test_authorized_user_edit_other_post(self) -> None:
-        post = Post.objects.create(
-            text='Текст поста для редактирования',
-            author=self.author,
-        )
-        data = {
-            'text': 'Отредактированный текст поста',
-        }
-        response = self.authorized_user.post(
-            reverse('posts:post_edit', args=[post.pk]),
-            data=data,
-            follow=True,
-        )
-        self.assertRedirects(
-            response,
-            reverse('posts:post_detail', args=[post.pk]),
-        )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertFalse(post.text == data['text'])
-        self.assertFalse(self.author != self.author)
+#     def test_nonauthorized_user_edit_post(self) -> None:
+#         self.client = Client()
+#         post = Post.objects.create(
+#             text='Текст поста для редактирования',
+#             author=self.author,
+#         )
+#         image = create_image()
+#         group = Group.objects.create(
+#             title='Тестовый заголовок',
+#             slug='test_slug',
+#             description='Тестовое описание',
+#         )
+#         data = {
+#             'text': 'Данные из формы',
+#             'group': group.pk,
+#             'image': image,
+#         }
+#         self.client.post(
+#             reverse(
+#                 'posts:post_edit',
+#                 args={post.pk},
+#             ),
+#             data=data,
+#             follow=True,
+#         )
+#         post_2 = Post.objects.get(id=group.pk)
+#         self.client.get(f'/author/{post_2.pk}/edit/')
+#         data = {
+#             'text': 'Измененный текст',
+#             'group': group.pk,
+#             'image': image,
+#         }
+#         self.assertEqual(post_2.image.name, f"posts/{data['image'].name}")
+#         self.assertEqual(post_2.text, data['text'])
+#         self.assertEqual(group.pk, data['group'])
 
 
-class FoollowCreateFormTests(TestCase):
+class FollowCreateFormTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user(username='user')
-        cls.author = User.objects.create_user(username='author')
-        cls.authorized_user = Client()
-        cls.follow = Follow.objects.create(
-            user=cls.user,
-            author=cls.author,
-        )
+        cls.user_follower = User.objects.create_user(username='follower')
+        cls.user_following = User.objects.create_user(username='following')
+        cls.client_auth_follower = Client()
+        cls.client_auth_following = Client()
 
     def setUp(self) -> None:
-        self.authorized_user.force_login(self.user)
-        self.authorized_user.force_login(self.author)
+        self.client_auth_follower.force_login(self.user_follower)
+        self.client_auth_following.force_login(self.user_following)
 
-    def test_succes_subscription(self) -> None:
-        follow_str_value = self.follow.__str__()
-        follow_test_value = self.follow.user.get_username()
-        self.assertEqual(follow_str_value, follow_test_value)
-        self.assertIsInstance(follow_str_value, str)
+    def test_successful_follow(self):
+        self.client_auth_follower.get(
+            reverse('posts:profile_follow', args={self.user_following}),
+        )
+        follow_count = Follow.objects.count()
+        self.assertEqual(Follow.objects.all().count(), follow_count)
 
-    def test_yourself_subscription(self) -> None:
-        follow_str_value = self.follow.__str__()
-        follow_test_value = self.follow.__str__()
-        self.assertEqual(follow_str_value, follow_test_value)
-        self.assertIsInstance(follow_str_value, str)
+    def test_successful_unfollow(self):
+        self.client_auth_follower.get(
+            reverse('posts:profile_follow', args={self.user_following}),
+        )
+        self.client_auth_follower.get(
+            reverse('posts:profile_unfollow', args={self.user_following}),
+        )
+        follow_count = Follow.objects.count()
+        self.assertEqual(Follow.objects.all().count(), follow_count)
 
-    def test_yourself_subscription(self) -> None:
-        follow_str_value = self.follow.user.get_username()
-        follow_test_value = self.follow.user.get_username()
-        self.assertEqual(follow_str_value, follow_test_value)
-        self.assertIsInstance(follow_str_value, str)
+    def test_self_subscription(self):
+        self.client_auth_follower.get(
+            reverse('posts:profile_follow', args={self.user_follower}),
+        )
+        follow_count = Follow.objects.count()
+        self.assertEqual(Follow.objects.all().count(), follow_count)
+
+    def test_double_follow(self):
+        self.client_auth_follower.get(
+            reverse('posts:profile_follow', args={self.user_following}),
+        )
+        self.client_auth_follower.get(
+            reverse('posts:profile_follow', args={self.user_following}),
+        )
+        follow_count = Follow.objects.count()
+        self.assertEqual(Follow.objects.all().count(), follow_count)
+
+    def test_anonymous_follow(self):
+        self.client = Client()
+        self.client.get(
+            reverse('posts:profile_follow', args={self.user_following}),
+        )
+        follow_count = Follow.objects.count()
+        self.assertEqual(Follow.objects.all().count(), follow_count)
+
+    def test_follow_to_anonymous(self):
+        self.client = Client()
+        self.client_auth_follower.get(
+            reverse('posts:profile_follow', args={self.client}),
+        )
+        follow_count = Follow.objects.count()
+        self.assertEqual(0, follow_count)

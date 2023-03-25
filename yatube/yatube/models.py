@@ -23,6 +23,8 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ('-created',)
+
 
     def __str__(self) -> str:
         return self.text[: settings.CHARACTER_NUMBER]
@@ -36,3 +38,4 @@ class CreatedModel(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ('-created',)

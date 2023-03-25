@@ -62,7 +62,6 @@ class Comment(BaseModel, CreatedModel):
     class Meta:
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
-        ordering = ('-created',)
 
     def __str__(self) -> str:
         return self.text[: settings.CHARACTER_NUMBER]
@@ -89,7 +88,6 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'подписка'
         verbose_name_plural = 'подписки'
-        ordering = ('-created',)
         constraints = [
             models.UniqueConstraint(
                 fields=('author', 'user'),

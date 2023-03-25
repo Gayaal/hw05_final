@@ -68,14 +68,16 @@ def post_detail(request: Any, pk: int) -> str:
         {
             'post': get_object_or_404(Post, id=pk),
             'form': CommentForm(request.POST or None),
-            'comments': get_object_or_404(Post, id=pk).comments.all(),
         },
     )
 
 
 @login_required
 def post_create(request: Any) -> str:
-    form = PostForm(request.POST or None)
+    form = PostForm(
+        request.POST or None,
+        files=request.FILES or None,
+    )
     if not form.is_valid():
         return render(request, 'posts/create_post.html', {'form': form})
     form.instance.author = request.user
