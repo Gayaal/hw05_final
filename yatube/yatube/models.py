@@ -25,7 +25,6 @@ class BaseModel(models.Model):
         abstract = True
         ordering = ('-created',)
 
-
     def __str__(self) -> str:
         return self.text[: settings.CHARACTER_NUMBER]
 

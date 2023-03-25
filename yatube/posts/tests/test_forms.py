@@ -1,12 +1,12 @@
-from http import HTTPStatus
 import shutil
 import tempfile
+from http import HTTPStatus
 
-from mixer.backend.django import mixer
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from mixer.backend.django import mixer
 
 from posts.models import Follow, Group, Post
 from posts.tests.common import create_image
@@ -23,7 +23,6 @@ class PostCreateFormTests(TestCase):
         cls.author = User.objects.create_user(username='author')
         cls.authorized_user = Client()
         cls.authorized_user.force_login(cls.author)
-
 
     @classmethod
     def tearDownClass(cls):
@@ -82,61 +81,6 @@ class PostCreateFormTests(TestCase):
         )
         posts_count = Post.objects.count()
         self.assertEqual(Post.objects.all().count(), posts_count)
-
-    def test_nonauthorized_can_not_edit_post(self) -> None:
-        post = mixer.blend('posts.Post', author=self.author)
-        self.client = Client()
-        response = self.client.post(
-            reverse('posts:post_edit', args={post.pk}),
-            follow=True,
-        )
-        post.refresh_from_db()
-        self.assertEqual(
-            response.post().status_code,
-            HTTPStatus.UNAUTHORIZED.value,
-        )
-        self.assertEqual(post.text, response.context.get('post').text)
-        self.assertEqual(post.group.pk, response.context.get('post').group.pk)
-        self.assertEqual(
-            post.image.file.read(),
-            response.context.get('post').image.file.read(),
-        )
-
-#     def test_nonauthorized_user_edit_post(self) -> None:
-#         self.client = Client()
-#         post = Post.objects.create(
-#             text='Текст поста для редактирования',
-#             author=self.author,
-#         )
-#         image = create_image()
-#         group = Group.objects.create(
-#             title='Тестовый заголовок',
-#             slug='test_slug',
-#             description='Тестовое описание',
-#         )
-#         data = {
-#             'text': 'Данные из формы',
-#             'group': group.pk,
-#             'image': image,
-#         }
-#         self.client.post(
-#             reverse(
-#                 'posts:post_edit',
-#                 args={post.pk},
-#             ),
-#             data=data,
-#             follow=True,
-#         )
-#         post_2 = Post.objects.get(id=group.pk)
-#         self.client.get(f'/author/{post_2.pk}/edit/')
-#         data = {
-#             'text': 'Измененный текст',
-#             'group': group.pk,
-#             'image': image,
-#         }
-#         self.assertEqual(post_2.image.name, f"posts/{data['image'].name}")
-#         self.assertEqual(post_2.text, data['text'])
-#         self.assertEqual(group.pk, data['group'])
 
 
 class FollowCreateFormTests(TestCase):

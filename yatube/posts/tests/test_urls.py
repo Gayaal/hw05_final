@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -46,6 +47,9 @@ class PostURLTests(TestCase):
             ),
             'index': reverse('posts:index'),
         }
+
+    def setUp(self):
+        cache.clear()
 
     def test_http_statuses(self) -> None:
         httpstatuses = (
@@ -139,7 +143,7 @@ class PostURLTests(TestCase):
             (
                 self.urls['post_edit'],
                 'posts/create_post.html',
-                self.authorized_client,
+                self.author_client,
             ),
             (
                 self.urls['post_detail'],
@@ -160,9 +164,3 @@ class PostURLTests(TestCase):
         for url, template, test_client in templates:
             with self.subTest(url=url):
                 self.assertTemplateUsed(test_client.get(url), template)
-
-        # qwerty = reverse('posts:index')
-        # response = self.authorized_client.get(qwerty)
-        # templates_name = [qwerty.name for qwerty in response.templates]
-        # print('здесь должны быть названия шаблонов!')
-        # print(templates_name)
