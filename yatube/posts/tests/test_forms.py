@@ -1,14 +1,14 @@
 import shutil
 import tempfile
-from http import HTTPStatus
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+
 from mixer.backend.django import mixer
 
-from posts.models import Follow, Group, Post
+from posts.models import Follow, Post
 from posts.tests.common import create_image
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
